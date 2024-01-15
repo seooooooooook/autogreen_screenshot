@@ -1,0 +1,23 @@
+info face="맑은 고딕 Semilight" size=45 bold=1 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=0,1 outline=0
+common lineHeight=45 base=37 scaleW=256 scaleH=256 pages=1 packed=0 alphaChnl=0 redChnl=3 greenChnl=0 blueChnl=3
+page id=0 file="date_font_0.png"
+chars count=19
+char id=48   x=34    y=31    width=16    height=23    xoffset=1     yoffset=14    xadvance=18    page=0  chnl=15
+char id=49   x=128   y=30    width=10    height=23    xoffset=1     yoffset=14    xadvance=13    page=0  chnl=15
+char id=50   x=50    y=31    width=16    height=23    xoffset=1     yoffset=14    xadvance=18    page=0  chnl=15
+char id=51   x=98    y=30    width=15    height=23    xoffset=1     yoffset=14    xadvance=18    page=0  chnl=15
+char id=52   x=235   y=0     width=19    height=23    xoffset=0     yoffset=14    xadvance=19    page=0  chnl=15
+char id=53   x=113   y=30    width=15    height=23    xoffset=2     yoffset=14    xadvance=18    page=0  chnl=15
+char id=54   x=0     y=31    width=17    height=23    xoffset=1     yoffset=14    xadvance=18    page=0  chnl=15
+char id=55   x=17    y=31    width=17    height=23    xoffset=0     yoffset=14    xadvance=18    page=0  chnl=15
+char id=56   x=66    y=30    width=16    height=23    xoffset=1     yoffset=14    xadvance=18    page=0  chnl=15
+char id=57   x=82    y=30    width=16    height=23    xoffset=1     yoffset=14    xadvance=18    page=0  chnl=15
+char id=44552 x=173   y=0     width=31    height=28    xoffset=1     yoffset=11    xadvance=33    page=0  chnl=15
+char id=45380 x=148   y=0     width=25    height=29    xoffset=4     yoffset=10    xadvance=33    page=0  chnl=15
+char id=47785 x=32    y=0     width=31    height=30    xoffset=1     yoffset=10    xadvance=33    page=0  chnl=15
+char id=49688 x=63    y=0     width=31    height=29    xoffset=1     yoffset=11    xadvance=33    page=0  chnl=15
+char id=50836 x=204   y=0     width=31    height=23    xoffset=1     yoffset=12    xadvance=33    page=0  chnl=15
+char id=50900 x=94    y=0     width=28    height=29    xoffset=2     yoffset=10    xadvance=33    page=0  chnl=15
+char id=51068 x=122   y=0     width=26    height=29    xoffset=4     yoffset=10    xadvance=33    page=0  chnl=15
+char id=53664 x=138   y=30    width=31    height=22    xoffset=1     yoffset=13    xadvance=33    page=0  chnl=15
+char id=54868 x=0     y=0     width=32    height=30    xoffset=1     yoffset=10    xadvance=33    page=0  chnl=15
