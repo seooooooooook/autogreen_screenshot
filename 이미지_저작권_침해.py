@@ -1,6 +1,9 @@
 # ========================================================================================================== #
 # SBS 이미지 단속용 채증 요청
 ## https://www.notion.so/5525d92ae07d49edb25d517baa1a7895?pvs=4#465d022185174e5bbfdf861eccfa1d10
+import subprocess
+from io import BytesIO
+
 from selenium.webdriver.support import expected_conditions as EC
 
 # 엑셀의 URL들을 들어가서 전체페이지에 시계가 들어간 이미지를 캡쳐하고
@@ -34,7 +37,7 @@ def chrome_driver(headless, max_screen=False, mobile=False, script_enabled=False
     global user_agent, driver
     options = webdriver.ChromeOptions()
     if headless:
-        options.add_argument("--headless=new")
+        options.add_argument("--headless")
     if max_screen:
         options.add_argument("--start-maximized")
     if mobile:
@@ -150,24 +153,25 @@ def edit_image(file_name, link, utckUp):
         os.makedirs(directory_path)
 
     # 이미지 저장
-    new_image.save(os.path.join(directory_path, file_name), quality=100)
+    # new_image.save(os.path.join(directory_path, file_name), quality=100)
+    compress_with_pngquant(new_image).save(os.path.join(directory_path, file_name), quality=100)
 
 
-#
-# # 이미지 리사이즈(사이즈 크기 줄이기)
-# # pil_image                   : 사이즈 크기를 줄일 PIL 라이브러리로 수정한 이미지 파일
-# # (return)                    : resize된 이미지 파일(PIL 라이브러리 자료형)
-# def compress_with_pngquant(pil_image):
-#     buffer = BytesIO()
-#     pil_image.save(buffer, format="PNG")
-#     buffer.seek(0)
-#
-#     process = subprocess.Popen(
-#         [os.path.join(current_path, 'pngquant', 'pngquant.exe').replace('\\', '\\\\'), '-', '--quality', '60-80'],
-#         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-#     stdout, _ = process.communicate(buffer.getvalue())
-#
-#     return Image.open(BytesIO(stdout))
+
+# 이미지 리사이즈(사이즈 크기 줄이기)
+# pil_image                   : 사이즈 크기를 줄일 PIL 라이브러리로 수정한 이미지 파일
+# (return)                    : resize된 이미지 파일(PIL 라이브러리 자료형)
+def compress_with_pngquant(pil_image):
+    buffer = BytesIO()
+    pil_image.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    process = subprocess.Popen(
+        [os.path.join(current_path, 'pngquant', 'pngquant.exe').replace('\\', '\\\\'), '-', '--quality', '60-80'],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    stdout, _ = process.communicate(buffer.getvalue())
+
+    return Image.open(BytesIO(stdout))
 
 
 # 페이지 스크린샷
@@ -207,20 +211,37 @@ def full_screenshot(driver, link):
 
         driver.implicitly_wait(3)
 
-
-        # 스크롤 초기화
-        current_height = 0
-        total_height = driver.execute_script("return document.body.parentNode.scrollHeight")
-        # 끝까지 스크롤 반복
-        driver.execute_script(f"window.scrollTo(0, {current_height});")
-        while current_height < total_height:
-            current_height += 200
-            driver.execute_script(f"window.scrollTo(0, {current_height});")
-            total_height = driver.execute_script("return document.body.parentNode.scrollHeight")
+        doc_height = driver.execute_script("return document.documentElement.scrollHeight")
+        last_doc_height = 0
+        while last_doc_height != doc_height:
+            driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
             time.sleep(2)
-        # 전체 페이지 설정
-        driver.set_window_size("900", total_height + 200)
-        time.sleep(1)
+            last_doc_height = doc_height
+            doc_height = driver.execute_script("return document.documentElement.scrollHeight")
+
+        if 'wala-land.com' in link:
+            doc_height += 597
+            driver.execute_script("window.scrollTo(0, 0);")
+        if 'wingbling.co.kr' in link:
+            try:
+                el = WebDriverWait(driver, 3).until(
+                    EC.presence_of_element_located((By.LINK_TEXT, '웹페이지로 계속하기 →'))
+                )
+                el.click()
+            except:
+                print('웹페이지로 계속하기 버튼이 없습니다.')
+                pass
+
+
+            img_elements = WebDriverWait(driver, 20).until(
+                EC.presence_of_all_elements_located((By.TAG_NAME, 'img'))
+            )
+            WebDriverWait(driver, 20).until(
+                lambda driver: map(lambda e: e.get_attribute('complete') == 'true', img_elements)
+            )
+            time.sleep(7)
+
+        driver.set_window_size("1400", doc_height + 200)
 
         # 이미지 파일로 저장
         output_path = current_path.replace('\\', '/')
@@ -250,7 +271,7 @@ def update_evidence_info(excel_row, dataframe, current, evidence_file_firstname)
 # driver                      : URL 접속할 크롬드라이버
 # link                        : 게시일자를 수집할 URL
 # (return)                    : date(게시일자)
-def crawling_date(driver, link):
+def crawling_date_and_title(driver, link):
     def extract_data(ds, ts):
         driver.get(link)
         driver.implicitly_wait(3)
@@ -384,6 +405,20 @@ def crawling_date(driver, link):
         return date, title
     elif 'www.studioandparc.co.kr' in link:
         return '', ''
+    elif 'jewelcounty.co.kr' in link:
+        print('jewelcounty.co.kr')
+        title_selector = 'div.headingArea > h2'
+        date_soup, title_soup = extract_data(ds="", ts=title_selector)
+        title = title_soup.text
+
+        return '' ,title
+    elif 'bluejealousy.co.kr' in link:
+        print('bluejealousy.co.kr')
+        title_selector = '#mk_center > form:nth-child(17) > table > tbody > tr > td > table > tbody > tr:nth-child(3) > td > table > tbody > tr > td:nth-child(2) > table > tbody > tr:nth-child(1) > td > font > b'
+        date_soup, title_soup = extract_data(ds="", ts=title_selector)
+        title = title_soup.text
+
+        return '' , title
 
     else:
         print("URL에 해당하는 osp가 없습니다. 채증을 종료합니다. osp 조건 추가 후 다시 시도해주세요.")
@@ -392,13 +427,28 @@ def crawling_date(driver, link):
     return '', ''
 
 
+def date_parser(date):
+    if 'T' in date:
+        date = date.split('T')[0]
+    if '.' in date:
+        dlist = date.split('.')
+        if len(dlist[1]) == 1:
+            dlist[1] = '0' + dlist[1]
+        if len(dlist[2]) == 1:
+            dlist[2] = '0' + dlist[2]
+        date = f"{dlist[0]}-{dlist[1]}-{dlist[2]}"
+    return date
+
+
 # 게시일자 정보 업데이트
 # excel_row                   : 엑셀에 값 입력해줄 때 필요한 행번호
 # date                        : 파일 이름 정의를 위해 필요한 수집된 게시일자
 # dataframe                   : 값을 넣어줄 엑셀파일
 # (return)                    : dataframe(수정된 엑셀파일)
 def update_date_info(excel_row, date, dataframe):
-    dataframe.at[excel_row, '작성 일자'] = date
+    parsed_date = date_parser(date)
+
+    dataframe.at[excel_row, '작성 일자'] = parsed_date
     return dataframe
 
 
@@ -431,25 +481,20 @@ def main(file_path, evidence_file_firstname, utckUp=False):
 
     # 이미지 캡처 및 크롤링 로직 (여기에 해당 로직 구현) -> for문으로 돌림
     for excel_row, link in enumerate(links):
-        if 'wala-land.com' not in link and 'instagram.com' not in link and 'thepartof.com' not in link and 'https://blog.naver.com/foretwon?Redirect=Log&logNo=221751045115&from=postView' not in link:
-            continue
-
-
-        print(link)
 
         # 현재 날짜, 시간 초기화
         current = datetime.now()
         # 게시일자 수집
-        # try:
-        #     date, title = crawling_date(driver, link)
-        # except Exception as e:
-        #     print("게시일자 수집 중 오류가 발생했습니다.", e)
-        #     date = ''
-        #     title = ''
-        # 게시일자 정보 업데이트
-        # df = update_date_info(excel_row, date, df)
-        # # 제목 정보 업데이트
-        # df = update_title_info(excel_row, title, df)
+        try:
+            date, title = crawling_date_and_title(driver, link)
+            # 게시일자 정보 업데이트
+            df = update_date_info(excel_row, date, df)
+            # 제목 정보 업데이트
+            df = update_title_info(excel_row, title, df)
+        except Exception as e:
+            print("게시일자 수집 중 오류가 발생했습니다.", e)
+            date = ''
+            title = ''
 
         # 페이지 스크린샷
         scshot_res = full_screenshot(driver, link)
@@ -464,7 +509,7 @@ def main(file_path, evidence_file_firstname, utckUp=False):
             df = update_evidence_info(excel_row, df, current, evidence_file_firstname)
 
     # 업데이트된 데이터프레임 저장
-    df.to_excel('output3.xlsx', index=False)
+    df.to_excel('output.xlsx', index=False)
 
 
 # 실행문
