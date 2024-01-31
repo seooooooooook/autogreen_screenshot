@@ -262,8 +262,8 @@ def full_screenshot(driver, link):
 def update_evidence_info(excel_row, dataframe, current, evidence_file_firstname):
     current_date = current.strftime("%Y-%m-%d")
     current_datetime = current.strftime("%Y-%m-%d_%H%M%S")
-    dataframe.at[excel_row, '채증 일자'] = current_date
-    dataframe.at[excel_row, '채증 파일'] = f"{dataframe.at[excel_row, evidence_file_firstname]}_{current_datetime}"
+    dataframe.at[excel_row, '채증일자'] = current_date
+    dataframe.at[excel_row, '채증 파일명'] = f"{dataframe.at[excel_row, evidence_file_firstname]}_{current_datetime}"
     return dataframe
 
 
@@ -420,6 +420,20 @@ def crawling_date_and_title(driver, link):
 
         return '' , title
 
+    elif 'lulusreviews.tistory.com' in link:
+        title_selector = 'div.hgroup > h1'
+        date_selector = 'div.post-meta > span.date'
+        date_soup, title_soup = extract_data(ds=date_selector, ts=title_selector)
+
+        return date_soup.text, title_soup.text
+    elif 'brenden.tistory.com' in link:
+        title_selector = 'h1.hd-heading'
+        date_selector = 'abbr.timeago'
+        date_soup, title_soup = extract_data(ds=date_selector, ts=title_selector)
+
+        return date_soup.text, title_soup.text
+
+
     else:
         print("URL에 해당하는 osp가 없습니다. 채증을 종료합니다. osp 조건 추가 후 다시 시도해주세요.")
         return
@@ -448,7 +462,7 @@ def date_parser(date):
 def update_date_info(excel_row, date, dataframe):
     parsed_date = date_parser(date)
 
-    dataframe.at[excel_row, '작성 일자'] = parsed_date
+    dataframe.at[excel_row, '게시일자'] = parsed_date
     return dataframe
 
 
@@ -458,7 +472,7 @@ def update_date_info(excel_row, date, dataframe):
 # dataframe                   : 값을 넣어줄 엑셀파일
 # (return)                    : dataframe(수정된 엑셀파일)
 def update_title_info(excel_row, title, dataframe):
-    dataframe.at[excel_row, '제목'] = title
+    dataframe.at[excel_row, '게시물 제목'] = title
     return dataframe
 
 
@@ -516,6 +530,6 @@ def main(file_path, evidence_file_firstname, utckUp=False):
 # file_path                   : 엑셀파일 경로
 # evidence_file_firstname     : 파일 이름 정의를 위해 엑셀에서 가져올 때 필요한 열 이름
 # utckUp                      : 시계 프로그램 위치(True - 위에 배치, False - 아래에 배치)
-main('input.xlsx', '브랜드', utckUp=True)
+main('input.xlsx', 'ID', utckUp=True)
 
 ## 예시로 적어둔 로직입니다! 지우시고 따로 만들어도 됩니다. 단 (1~10)에 적어둔 요구사항 주석은 지우면 안 됩니다.
