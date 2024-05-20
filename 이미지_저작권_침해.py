@@ -16,7 +16,7 @@ import pandas as pd
 import time, os, pyglet
 
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support.ui import WebDriverWait
 
 from resource.time_def import *
 from PIL import Image
@@ -33,11 +33,18 @@ user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' \
 header = {'User-Agent': user_agent}
 
 
-def chrome_driver(headless, max_screen=False, mobile=False, script_enabled=False, tor_browser=False):
+def chrome_driver(headless, max_screen=False, mobile=False, script_enabled=False, tor_browser=False ,unsecured=False):
     global user_agent, driver
     options = webdriver.ChromeOptions()
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
+
+    if unsecured:
+        options.add_argument("--ignore-certificate-errors")
+        options.add_argument("--ignore-ssl-errors")
     if headless:
-        options.add_argument("--headless")
+        options.add_argument("--headless=new")
     if max_screen:
         options.add_argument("--start-maximized")
     if mobile:
@@ -59,7 +66,7 @@ def chrome_driver(headless, max_screen=False, mobile=False, script_enabled=False
 # file_path                   : 엑셀파일 경로
 # (return)                    : pandas 라이브러리 자료형
 def load_excel(file_path):
-    return pd.read_excel(file_path, converters={"작성 일자": str})
+    return pd.read_excel(file_path)
 
 
 # 링크 추출
@@ -182,74 +189,160 @@ def full_screenshot(driver, link):
     # URL 파싱
     if 'facebook.com' in link:
         link = link.replace('//www', '//m')
-    elif 'naver.com' in link:
+    elif 'blog.naver.com' in link:
         link = link.replace('//', '//m.')
     elif 'wingbling.co.kr' in link:
         link = link.replace('//', '//m.')
 
     try:
         # 전체 페이지 초기화
-        driver.set_window_size("900", "500")
+        if 'mi0.co.kr' in link:
+            driver.set_window_size(1350, 500)
+        if 'mi0.co.kr' in link:
+            driver.set_window_size(1350, 500)
+
+        
+        elif 'paulbrial.xyz' in link:
+            driver.set_window_size(1500, 500)
+        elif 'pinklavender.co.kr' in link:
+            driver.set_window_size(1500, 500)
+        elif 'smartstore.naver.com' in link:
+            driver.set_window_size(1500, 500)
+        elif 'shopping.naver.com' in link:
+            driver.set_window_size(1500, 500)
+        elif 'primaute.co.kr' in link:
+            driver.set_window_size(1700, 500)
+        elif 'coupang.com' in link:
+            driver.set_window_size(1200, 500)
+        elif 'cafe.daum.net' in link:
+            driver.set_window_size(1200, 500)
+        else:
+            driver.set_window_size(900, 500)
+
+        
         driver.get(link)
-        time.sleep(1)
+        if 'a-bly.com' in link:
+            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'head > meta[property="og:title"]')))
+
+        if 'coupang.com' in link:
+            
+            driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+                "source": """
+                        Object.defineProperty(navigator, 'webdriver', {
+                            get: () => undefined
+                        })
+                        """
+            })
+
 
         if 'wingbling.co.kr' in link:
             driver.implicitly_wait(2)
+            time.sleep(10)
 
-        if 'zigzag.kr' in link:
-            # '상품정보 더보기' 버튼 클릭
-            try:
+        try:
+            if 'zigzag.kr' in link:
+                # '상품정보 더보기' 버튼 클릭
                 WebDriverWait(driver, 3).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, 'div.css-frjp3p.ed6fn8w0'))
                 )
                 el = driver.find_element(By.CSS_SELECTOR, 'div.css-frjp3p.ed6fn8w0')
 
+                driver.execute_script("arguments[0].scrollIntoView();", el)
                 driver.execute_script("arguments[0].click();", el)
-            except:
-                print('상품정보 더보기 버튼이 없습니다.')
-                pass
+            if '29cm.co.kr' in link:
+                # '상품정보 더보기' 버튼 클릭
+                WebDriverWait(driver, 3).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'button.efgb0b60'))
+                )
+                el = driver.find_element(By.CSS_SELECTOR, 'button.efgb0b60')
+
+                driver.execute_script("arguments[0].scrollIntoView();", el)
+                driver.execute_script("arguments[0].click();", el)
+            if 'smartstore.naver.com' in link:
+                # '상품정보 더보기' 버튼 클릭
+                time.sleep(1)
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'button[data-shp-inventory="detailitm"]'))
+                )
+                el = driver.find_element(By.CSS_SELECTOR, 'button[data-shp-inventory="detailitm"]')
+                # scroll to element
+                driver.execute_script("arguments[0].scrollIntoView();", el)
+                driver.execute_script("arguments[0].click();", el)
+            if 'shopping.naver.com' in link:
+                # '상품정보 더보기' 버튼 클릭
+                time.sleep(1)
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'button[data-shp-inventory="detailitm"]'))
+                )
+                el = driver.find_element(By.CSS_SELECTOR, 'button[data-shp-inventory="detailitm"]')
+                # scroll to element
+                driver.execute_script("arguments[0].scrollIntoView();", el)
+                driver.execute_script("arguments[0].click();", el)
+        except Exception as e:
+            print(e)
+            print(f'{link} / 상품정보 더보기 버튼이 없습니다.')
+            return False
+        
+        if "cafe.daum.net" in link:
+            # iframe 전환
+            driver.switch_to.frame(driver.find_element(By.CSS_SELECTOR, 'iframe#down'))
 
         driver.implicitly_wait(3)
+         # 스크롤 초기화
+        current_height = 0
+        total_height = driver.execute_script("return document.body.parentNode.scrollHeight")
+        # 끝까지 스크롤 반복
+        driver.execute_script(f"window.scrollTo(0, {current_height});")
+        while current_height < total_height:
+            print(f"스크롤 중... {current_height} / {total_height}")
+            current_height += 500
+            driver.execute_script(f"window.scrollTo(0, {current_height});")
+            # try:
+            #     img_elements = WebDriverWait(driver, 20).until(
+            #         EC.presence_of_all_elements_located((By.TAG_NAME, 'img'))
+            #     )
+            #     WebDriverWait(driver, 20).until(
+            #         lambda driver: map(lambda e: e.get_attribute('complete') == 'true', img_elements)
+            #     )
+            # except Exception as e:
+            #     print(e)
+            #     print(f"{link} / 이미지가 로드되지 않았습니다.")
 
-        doc_height = driver.execute_script("return document.documentElement.scrollHeight")
-        last_doc_height = 0
-        while last_doc_height != doc_height:
-            driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
-            time.sleep(2)
-            last_doc_height = doc_height
-            doc_height = driver.execute_script("return document.documentElement.scrollHeight")
+            total_height = driver.execute_script("return document.body.parentNode.scrollHeight")
+            print(f"스크롤 중... {current_height} / {total_height}")
+            time.sleep(1)
+        # 전체 페이지 설정
+        
+        if 'mi0.co.kr' in link:
+            driver.set_window_size(1350, total_height+200)
 
-        if 'wala-land.com' in link:
-            doc_height += 597
-            driver.execute_script("window.scrollTo(0, 0);")
-        if 'wingbling.co.kr' in link:
-            try:
-                el = WebDriverWait(driver, 3).until(
-                    EC.presence_of_element_located((By.LINK_TEXT, '웹페이지로 계속하기 →'))
-                )
-                el.click()
-            except:
-                print('웹페이지로 계속하기 버튼이 없습니다.')
-                pass
+        
+        elif 'paulbrial.xyz' in link:
+            driver.set_window_size(1500, total_height+200)
+        elif 'pinklavender.co.kr' in link:
+            driver.set_window_size(1500, total_height+200)
+        elif 'smartstore.naver.com' in link:
+            driver.set_window_size(1500, total_height+200)
+        elif 'shopping.naver.com' in link:
+            driver.set_window_size(1500, total_height+200)
+        elif 'primaute.co.kr' in link:
+            driver.set_window_size(1700, total_height+200)
+        elif 'coupang.com' in link:
+            driver.set_window_size(1200, total_height+200)
+        elif 'cafe.daum.net' in link:
+            driver.set_window_size(1200, total_height+200)
+        else:
+            driver.set_window_size(900, total_height+200)
 
 
-            img_elements = WebDriverWait(driver, 20).until(
-                EC.presence_of_all_elements_located((By.TAG_NAME, 'img'))
-            )
-            WebDriverWait(driver, 20).until(
-                lambda driver: map(lambda e: e.get_attribute('complete') == 'true', img_elements)
-            )
-            time.sleep(7)
-
-        driver.set_window_size("1400", doc_height + 200)
-
+        print("윈도우 사이즈", driver.get_window_size()["width"])
         # 이미지 파일로 저장
         output_path = current_path.replace('\\', '/')
         driver.save_screenshot(f"{output_path}/resource/screenshot.png")
         return True
     except Exception as e:
         print(e)
-        print("페이지가 존재하지 않습니다.")
+        print(f"{link} / 페이지가 존재하지 않습니다.")
         return False
 
 
@@ -261,9 +354,10 @@ def full_screenshot(driver, link):
 # (return)                    : dataframe(수정된 엑셀파일)
 def update_evidence_info(excel_row, dataframe, current, evidence_file_firstname):
     current_date = current.strftime("%Y-%m-%d")
-    current_datetime = current.strftime("%Y-%m-%d_%H%M%S")
-    dataframe.at[excel_row, '채증일자'] = current_date
-    dataframe.at[excel_row, '채증 파일명'] = f"{dataframe.at[excel_row, evidence_file_firstname]}_{current_datetime}"
+    # current_datetime = current.strftime("%Y-%m-%d_%H%M%S")
+    dataframe.at[excel_row, '채증 일자'] = current_date
+    # dataframe.at[excel_row, '채증 파일'] = f"{evidence_file_firstname}_{current_datetime}"
+    dataframe.at[excel_row, '채증 파일'] = evidence_file_firstname
     return dataframe
 
 
@@ -274,6 +368,7 @@ def update_evidence_info(excel_row, dataframe, current, evidence_file_firstname)
 def crawling_date_and_title(driver, link):
     def extract_data(ds, ts):
         driver.get(link)
+        time.sleep(5)
         driver.implicitly_wait(3)
 
         response = driver.page_source
@@ -395,7 +490,7 @@ def crawling_date_and_title(driver, link):
 
         return date_soup, title
     elif 'wala-land.com' in link:
-        title = 'h1.content-title'
+        title = 'h2.content-title'
         date = 'p.date'
         date_soup, title_soup = extract_data(ds=date, ts=title)
         title = title_soup.text
@@ -432,7 +527,55 @@ def crawling_date_and_title(driver, link):
         date_soup, title_soup = extract_data(ds=date_selector, ts=title_selector)
 
         return date_soup.text, title_soup.text
+    elif 'smartstore.naver.com' in link:
+        title_selector = 'h3._22kNQuEXmb'
+        date_soup, title_soup = extract_data(ds="", ts=title_selector)
+        return '', title_soup.text
+    elif 'shopping.naver.com' in link:
+        title_selector = 'h3._22kNQuEXmb'
+        date_soup, title_soup = extract_data(ds="", ts=title_selector)
+        return '', title_soup.text
+    elif '29cm.co.kr' in link:
+        title_selector = 'h2#pdp_product_name'
+        date_soup, title_soup = extract_data(ds="", ts=title_selector)
 
+        return '', title_soup.text
+    elif 'coupang.com' in link:
+
+        title_selector = 'h2.prod-buy-header__title'
+        date_soup, title_soup = extract_data(ds="", ts=title_selector)
+
+        return '', title_soup.text
+    elif 'primaute.co.kr' in link:
+        title_selector = 'div.tb-left'
+        # div.cont-sub-des 하위의 3개 span태그 중 1번째 태그
+        date_selector = 'div.cont-sub-des > div:nth-child(1)'
+        driver.get(link)
+        date_soup = driver.find_element(By.CSS_SELECTOR, date_selector).text.split(':')[1].strip()
+        title_soup = driver.find_element(By.CSS_SELECTOR, title_selector).text.strip()
+
+        return date_soup, title_soup
+
+    elif 'a-bly.com' in link:
+        title_selector = 'head > meta[property="og:title"]'
+        driver.get(link)
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, title_selector)))
+        title_soup = driver.find_element(By.CSS_SELECTOR, title_selector).get_attribute('content').split('-')[0].strip()
+
+        return '', title_soup
+    
+    elif 'pinklavender.co.kr' in link:
+        title_selector = 'div#prdInfo > h3'
+        date_soup, title_soup = extract_data(ds="", ts=title_selector)
+
+        return '', title_soup.text
+
+    elif 'paulbrial.xyz' in link:
+        title_selector = 'div.board_view_tit > h3'
+        date_selector = 'span.view_info_day'
+        date_soup, title_soup = extract_data(ds=date_selector, ts=title_selector)
+
+        return date_soup.text.strip(), title_soup.text.strip()
 
     else:
         print("URL에 해당하는 osp가 없습니다. 채증을 종료합니다. osp 조건 추가 후 다시 시도해주세요.")
@@ -460,9 +603,10 @@ def date_parser(date):
 # dataframe                   : 값을 넣어줄 엑셀파일
 # (return)                    : dataframe(수정된 엑셀파일)
 def update_date_info(excel_row, date, dataframe):
-    parsed_date = date_parser(date)
+    parsed_date = date.replace(' ', '')
 
-    dataframe.at[excel_row, '게시일자'] = parsed_date
+    if pd.isnull(dataframe.at[excel_row, '작성 일자']):
+        dataframe.at[excel_row, '작성 일자'] = date_parser(parsed_date)
     return dataframe
 
 
@@ -472,7 +616,8 @@ def update_date_info(excel_row, date, dataframe):
 # dataframe                   : 값을 넣어줄 엑셀파일
 # (return)                    : dataframe(수정된 엑셀파일)
 def update_title_info(excel_row, title, dataframe):
-    dataframe.at[excel_row, '게시물 제목'] = title
+    if pd.isnull(dataframe.at[excel_row, '제목']):
+        dataframe.at[excel_row, '제목'] = title
     return dataframe
 
 
@@ -482,7 +627,7 @@ def update_title_info(excel_row, title, dataframe):
 # utckUp                      : 시계 프로그램 위치(True - 위에 배치, False - 아래에 배치)
 def main(file_path, evidence_file_firstname, utckUp=False):
     # driver 초기화
-    driver = chrome_driver(headless=True)
+    driver = chrome_driver(headless=True, unsecured=True)
     # 엑셀 파일 로드
     try:
         df = load_excel(file_path)
@@ -497,39 +642,56 @@ def main(file_path, evidence_file_firstname, utckUp=False):
     for excel_row, link in enumerate(links):
 
         # 현재 날짜, 시간 초기화
+
         current = datetime.now()
+
         # 게시일자 수집
-        try:
-            date, title = crawling_date_and_title(driver, link)
-            # 게시일자 정보 업데이트
-            df = update_date_info(excel_row, date, df)
-            # 제목 정보 업데이트
-            df = update_title_info(excel_row, title, df)
-        except Exception as e:
-            print("게시일자 수집 중 오류가 발생했습니다.", e)
-            date = ''
-            title = ''
+        # try:
+        #     if pd.isnull(df.at[excel_row, '제목']):
+        #         date, title = crawling_date_and_title(driver, link)
+        #         print("게시일자", date, "제목", title)
+        #         # 게시일자 정보 업데이트
+        #         df = update_date_info(excel_row, date, df)
+        #         # 제목 정보 업데이트
+        #         df = update_title_info(excel_row, title, df)
+        # except Exception as e:
+        #     print("게시일자 수집 중 오류가 발생했습니다.", e)
+        #     date = ''
+        #     title = ''
 
         # 페이지 스크린샷
-        scshot_res = full_screenshot(driver, link)
+        scshot_res = False
+        try:
+            if "cafe.daum.net" not in link:
+                continue
+            link = link + "?svc=cafefavoritearticle"
+            if pd.isnull(df.at[excel_row, '채증 파일']):
+                scshot_res = full_screenshot(driver, link)
+                print(f"[{excel_row}/{len(links)}]", "번째 이미지 채증 완료", link)
+        except Exception as e:
+            print("삭제게시물?")
 
         # True - 페이지 스크린샷 성공 / False - 페이지 스크린샷 실패(삭제된 게시글 | 선택자 못찾음)
         if (scshot_res):
-            # 파일 이름 정의
-            file_name = f"{df.at[excel_row, evidence_file_firstname]}_{current.strftime('%Y-%m-%d_%H%M%S')}.png"
-            # 이미지 채증
-            edit_image(file_name, link, utckUp)
-            # 채증 정보 업데이트
-            df = update_evidence_info(excel_row, df, current, evidence_file_firstname)
+            try:
+                # 파일 이름 정의
+                file_name = f"{df.at[excel_row, evidence_file_firstname]}_{current.strftime('%Y-%m-%d_%H%M%S')}.png"
+                # 이미지 채증
+                edit_image(file_name, link, utckUp)
+                # 채증 정보 업데이트
+                # df = update_evidence_info(excel_row, df, current, df.at[excel_row, '브랜드'])
+                df = update_evidence_info(excel_row, df, current, evidence_file_firstname=file_name)
+            except:
+                print("이미지 크기가 너무 커서 채증에 실패했습니다.")
 
     # 업데이트된 데이터프레임 저장
-    df.to_excel('output.xlsx', index=False)
+    df.to_excel('빌리프랩_댓글 수집 이미지채증.xlsx', index=False)
 
 
 # 실행문
 # file_path                   : 엑셀파일 경로
 # evidence_file_firstname     : 파일 이름 정의를 위해 엑셀에서 가져올 때 필요한 열 이름
 # utckUp                      : 시계 프로그램 위치(True - 위에 배치, False - 아래에 배치)
-main('input.xlsx', 'ID', utckUp=True)
+main('빌리프랩_댓글 수집.xlsx', '출처', utckUp=False)
 
 ## 예시로 적어둔 로직입니다! 지우시고 따로 만들어도 됩니다. 단 (1~10)에 적어둔 요구사항 주석은 지우면 안 됩니다.
